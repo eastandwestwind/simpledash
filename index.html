@@ -14,13 +14,16 @@
 }(window,document,'script'));
 </script>
 
-<div id="view">
-  <div id="view-selector-container"></div>
+<div id="top-nav">
+  <div id="view">
+    <div id="view-selector-container"></div>
+  </div>
+  <div id="embed-date">
+    <div id="embed-api-auth-container"></div>
+    <div id="date-range-selector-container"></div>
+  </div>
 </div>
-<div id="embed-date">
-  <div id="embed-api-auth-container"></div>
-  <div id="date-range-selector-container"></div>
-</div>
+<div id="page-chart-container"></div>
 <div id="main-chart-container"></div>
 <div id="breakdown-chart-container"></div>
 
@@ -47,6 +50,9 @@
 <script src="script.js"></script>
 
 <style>
+#top-nav {
+  white-space: nowrap;
+}
 #embed-date {
   display: inline-block;
   width: 50%;
@@ -54,13 +60,21 @@
 }
 #view {
   display: inline-block;
-  width: 49%;
+  width: 50%;
 }
 #embed-api-auth-container {
   padding-bottom: 10px;
 }
 .DateRangeSelector-item {
   display: inline-block;
+}
+#page-chart-container {
+  display: inline-block;
+  width: 50%;
+}
+#main-chart-container {
+  display: inline-block;
+  width: 25%;
 }
 </style>
 

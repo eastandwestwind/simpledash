@@ -41,6 +41,29 @@ gapi.analytics.ready(function() {
   .set(dateRange)
   .execute();
 
+
+  /**
+   * Create a table chart showing top pagepaths for users to interact with.
+   * Clicking on a row in the table will update a second timeline chart with
+   * data from the selected medium.
+   */
+  var pageChart = new gapi.analytics.googleCharts.DataChart({
+    query: {
+      'dimensions': 'ga:pagePath',
+      'metrics': 'ga:sessions',
+      'sort': '-ga:sessions',
+      'max-results': '6'
+    },
+    chart: {
+      type: 'TABLE',
+      container: 'page-chart-container',
+      options: {
+        width: '100%'
+      }
+    }
+  });
+
+
   /**
    * Create a table chart showing top mediums for users to interact with.
    * Clicking on a row in the table will update a second timeline chart with
@@ -82,7 +105,12 @@ gapi.analytics.ready(function() {
     }
   });
 
-
+  /**
+   * Store a refernce to the row click listener variable so it can be
+   * removed later to prevent leaking memory when the chart instance is
+   * replaced.
+   */
+  var pageChartRowClickListener;
   /**
    * Store a refernce to the row click listener variable so it can be
    * removed later to prevent leaking memory when the chart instance is
@@ -99,10 +127,14 @@ gapi.analytics.ready(function() {
 
     // Clean up any event listeners registered on the main chart before
     // rendering a new one.
+    if (pageChartRowClickListener) {
+      google.visualization.events.removeListener(pageChartRowClickListener);
+    }
     if (mainChartRowClickListener) {
       google.visualization.events.removeListener(mainChartRowClickListener);
     }
 
+    pageChart.set(options).execute();
     mainChart.set(options).execute();
     breakdownChart.set(options);
 
@@ -116,6 +148,7 @@ gapi.analytics.ready(function() {
    * instance as well as change the dashboard subtitle to reflect the range.
    */
   dateRangeSelector.on('change', function(data) {
+    pageChart.set({query: data}).execute();
     mainChart.set({query: data}).execute();
     breakdownChart.set({query: data}).execute();
 
@@ -124,7 +157,36 @@ gapi.analytics.ready(function() {
     datefield.textContent = data['start-date'] + '&mdash;' + data['end-date'];
   });
 
+  pageChart.on('success', function(response) {
 
+    var chart = response.chart;
+    var dataTable = response.dataTable;
+
+    // Store a reference to this listener so it can be cleaned up later.
+    pageChartRowClickListener = google.visualization.events
+        .addListener(chart, 'select', function(event) {
+
+      // When you unselect a row, the "select" event still fires
+      // but the selection is empty. Ignore that case.
+      if (!chart.getSelection().length) return;
+
+      var row =  chart.getSelection()[0].row;
+      var pagePath =  dataTable.getValue(row, 0);
+      var options = {
+        query: {
+          filters: 'ga:pagePath==' + pagePath
+        },
+        chart: {
+          options: {
+            title: pagePath
+          }
+        }
+      };
+
+      mainChart.set(options).execute();
+      breakdownChart.set(options).execute();
+    });
+  });
   /**
    * Each time the main chart is rendered, add an event listener to it so
    * that when the user clicks on a row, the line chart is updated with
@@ -156,6 +218,7 @@ gapi.analytics.ready(function() {
         }
       };
 
+      pageChart.set(options).execute();
       breakdownChart.set(options).execute();
     });
   });
